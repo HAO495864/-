@@ -1,0 +1,575 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>🐋 小鲸鱼打工日记</title>
+<style>
+  :root{
+    --ink:#e9f6ff;
+    --muted:#8fb3cc;
+    --card:rgba(255,255,255,.055);
+    --line:rgba(125,211,252,.16);
+    --cyan:#5eead4;
+    --blue:#38bdf8;
+    --warn:#fbbf24;
+    --pink:#f9a8d4;
+  }
+  *{box-sizing:border-box;}
+  html,body{margin:0;padding:0;}
+  body{
+    min-height:100vh;
+    color:var(--ink);
+    font-family:"PingFang SC","Microsoft YaHei",system-ui,-apple-system,"Segoe UI",sans-serif;
+    background:
+      radial-gradient(900px 520px at 12% -12%, rgba(56,189,248,.30), transparent 60%),
+      radial-gradient(720px 440px at 96% 2%, rgba(45,212,191,.18), transparent 55%),
+      radial-gradient(900px 620px at 50% 118%, rgba(37,99,235,.34), transparent 62%),
+      linear-gradient(180deg,#04121f 0%,#061a2c 46%,#020a12 100%);
+    background-attachment:fixed;
+    overflow-x:hidden;
+  }
+  .bubbles{position:fixed;inset:0;pointer-events:none;z-index:0;overflow:hidden;}
+  .bubble{
+    position:absolute;bottom:-80px;display:block;border-radius:50%;
+    background:radial-gradient(circle at 32% 30%, rgba(255,255,255,.55), rgba(125,211,252,.12) 62%, transparent 72%);
+    border:1px solid rgba(148,233,255,.18);
+    animation:rise linear infinite;
+  }
+  @keyframes rise{
+    0%{transform:translateY(0) translateX(0) scale(.65);opacity:0;}
+    12%{opacity:.85;}
+    88%{opacity:.45;}
+    100%{transform:translateY(-118vh) translateX(28px) scale(1.15);opacity:0;}
+  }
+  .wrap{position:relative;z-index:1;max-width:760px;margin:0 auto;padding:34px 20px 60px;}
+
+  .head{text-align:center;margin-bottom:8px;}
+  .tag{
+    display:inline-block;font-size:12px;letter-spacing:.22em;color:#7dd3fc;
+    border:1px solid rgba(125,211,252,.35);border-radius:999px;padding:5px 14px;
+    background:rgba(56,189,248,.08);margin-bottom:14px;
+  }
+  h1{font-size:clamp(28px,5.4vw,42px);margin:0;letter-spacing:.04em;font-weight:800;}
+  h1 span{
+    background:linear-gradient(96deg,#5eead4,#38bdf8 55%,#a78bfa);
+    -webkit-background-clip:text;background-clip:text;color:transparent;
+  }
+  .sub{margin:10px 0 0;color:var(--muted);font-size:13px;letter-spacing:.06em;}
+
+  .stage{position:relative;display:flex;flex-direction:column;align-items:center;margin:4px 0 16px;}
+  .whale{width:min(420px,86vw);height:auto;overflow:visible;filter:drop-shadow(0 26px 44px rgba(2,12,27,.75));}
+  .whale .bob{animation:bob 4.4s ease-in-out infinite;transform-origin:200px 150px;}
+  body.fast .whale .bob{animation-duration:2.1s;}
+  @keyframes bob{
+    0%,100%{transform:translateY(0) rotate(-1.1deg);}
+    50%{transform:translateY(-12px) rotate(1.1deg);}
+  }
+  .whale .spout path{animation:spout 3.2s ease-in-out infinite;transform-origin:186px 96px;}
+  .whale .spout path:nth-child(2){animation-delay:.15s;}
+  @keyframes spout{
+    0%,62%{opacity:0;transform:scaleY(.3);}
+    72%{opacity:.95;}
+    92%,100%{opacity:0;transform:scaleY(1.18);}
+  }
+  .status{
+    margin-top:-6px;font-size:14px;color:#bfe9ff;letter-spacing:.08em;
+    padding:7px 18px;border-radius:999px;border:1px solid var(--line);background:rgba(8,24,40,.62);
+    backdrop-filter:blur(6px);
+  }
+
+  .grid{display:grid;grid-template-columns:1.15fr .85fr;gap:14px;margin-top:18px;}
+  @media (max-width:640px){.grid{grid-template-columns:1fr;}}
+
+  .card{
+    display:flex;flex-direction:column;
+    background:var(--card);border:1px solid var(--line);border-radius:18px;padding:16px 18px;
+    backdrop-filter:blur(10px);box-shadow:0 18px 40px rgba(0,0,0,.28);
+  }
+  .card-title{font-size:12px;letter-spacing:.18em;color:var(--muted);text-transform:uppercase;margin-bottom:12px;display:flex;justify-content:space-between;gap:8px;}
+  .row{display:flex;align-items:center;gap:9px;margin:9px 0;font-size:14px;}
+  .row b{margin-left:auto;font-variant-numeric:tabular-nums;font-size:17px;letter-spacing:.03em;}
+  .dot{width:9px;height:9px;border-radius:50%;box-shadow:0 0 12px currentColor;}
+  .dot.work{color:var(--blue);background:var(--blue);}
+  .dot.fish{color:var(--cyan);background:var(--cyan);}
+  .label{color:#c7e6f7;}
+
+  .btns{display:flex;gap:8px;margin-top:14px;flex-wrap:wrap;}
+  .btn{
+    flex:1;min-width:78px;cursor:pointer;font:inherit;font-size:13.5px;padding:9px 12px;border-radius:11px;
+    border:1px solid rgba(148,233,255,.24);background:rgba(255,255,255,.05);color:var(--ink);
+    transition:.18s ease;letter-spacing:.04em;
+  }
+  .btn:hover{background:rgba(255,255,255,.11);transform:translateY(-1px);}
+  .btn:active{transform:translateY(0) scale(.985);}
+  .btn.primary{
+    background:linear-gradient(120deg,#0ea5e9,#22d3ee);border-color:transparent;color:#04202f;font-weight:700;
+    box-shadow:0 8px 22px rgba(34,211,238,.22);
+  }
+  .btn.primary:hover{filter:brightness(1.07);}
+  .btn.ghost{flex:0 0 auto;background:transparent;color:#a9d4ea;}
+  .btn.small{padding:7px 13px;font-size:12.5px;}
+  .btn.on{outline:2px solid rgba(94,234,212,.65);outline-offset:1px;}
+
+  .q{flex:1;margin:0 0 14px;font-size:15.5px;line-height:1.85;color:#e2f4ff;min-height:64px;}
+  #btnQuote{align-self:flex-start;}
+  .q.fade{animation:fadein .4s ease both;}
+  @keyframes fadein{from{opacity:0;transform:translateY(6px);}to{opacity:1;transform:none;}}
+
+  .todo{margin-top:14px;}
+  .bar{height:7px;border-radius:999px;background:rgba(255,255,255,.08);overflow:hidden;margin-bottom:14px;}
+  .bar i{display:block;height:100%;width:0;border-radius:999px;background:linear-gradient(90deg,#5eead4,#38bdf8,#a78bfa);transition:width .45s cubic-bezier(.4,1.4,.5,1);}
+  .add{display:flex;gap:8px;margin-bottom:12px;}
+  .add input{
+    flex:1;min-width:0;font:inherit;font-size:13.5px;color:var(--ink);
+    background:rgba(4,16,28,.6);border:1px solid rgba(125,211,252,.2);border-radius:11px;padding:10px 13px;
+    outline:none;transition:.18s;
+  }
+  .add input::placeholder{color:#5f8199;}
+  .add input:focus{border-color:rgba(94,234,212,.55);box-shadow:0 0 0 3px rgba(94,234,212,.12);}
+  .add .btn{flex:0 0 auto;min-width:auto;}
+  .list{list-style:none;margin:0;padding:0;display:flex;flex-direction:column;gap:8px;}
+  .list li{
+    display:flex;align-items:center;gap:11px;padding:10px 12px;border-radius:11px;
+    background:rgba(255,255,255,.035);border:1px solid rgba(125,211,252,.1);
+  }
+  .list li.done{opacity:.5;}
+  .list li.done .txt{text-decoration:line-through;text-decoration-color:rgba(94,234,212,.7);}
+  .list input[type=checkbox]{
+    appearance:none;width:18px;height:18px;flex:0 0 auto;border-radius:6px;cursor:pointer;
+    border:1.5px solid rgba(148,233,255,.45);background:transparent;transition:.18s;position:relative;
+  }
+  .list input[type=checkbox]:checked{background:linear-gradient(120deg,#22d3ee,#5eead4);border-color:transparent;}
+  .list input[type=checkbox]:checked::after{
+    content:"";position:absolute;left:5px;top:1.5px;width:5px;height:10px;
+    border:2px solid #04202f;border-top:0;border-left:0;transform:rotate(42deg);
+  }
+  .txt{flex:1;font-size:14px;line-height:1.5;word-break:break-word;}
+  .del{
+    flex:0 0 auto;background:none;border:0;color:#63859c;cursor:pointer;font-size:16px;line-height:1;
+    padding:2px 4px;border-radius:6px;transition:.15s;
+  }
+  .del:hover{color:#fca5a5;background:rgba(252,165,165,.1);}
+  .empty{color:#8fb3cc;font-size:13px;padding:12px 4px;letter-spacing:.05em;animation:none!important;}
+
+  .foot{display:flex;align-items:center;justify-content:space-between;gap:12px;margin-top:20px;flex-wrap:wrap;}
+  .foot span{font-size:12px;color:#5f8199;letter-spacing:.05em;}
+
+  .toast{
+    position:fixed;left:50%;bottom:38px;transform:translate(-50%,20px);z-index:9;
+    background:rgba(6,26,44,.94);border:1px solid rgba(94,234,212,.4);color:#d9fbf5;
+    padding:10px 20px;border-radius:999px;font-size:13.5px;letter-spacing:.05em;
+    opacity:0;pointer-events:none;transition:.28s ease;box-shadow:0 14px 34px rgba(0,0,0,.5);
+  }
+  .toast.show{opacity:1;transform:translate(-50%,0);}
+</style>
+</head>
+<body>
+<div class="bubbles" id="bubbles" aria-hidden="true"></div>
+
+<main class="wrap">
+  <header class="head">
+    <div class="tag">今日份营业</div>
+    <h1>小鲸鱼<span>打工日记</span></h1>
+    <p class="sub" id="today">—</p>
+  </header>
+
+  <section class="stage">
+    <svg class="whale" viewBox="0 0 400 250" role="img" aria-label="一只正在打工的小鲸鱼">
+      <defs>
+        <linearGradient id="bodyGrad" x1="0" y1="0" x2="0.2" y2="1">
+          <stop offset="0%" stop-color="#7dd3fc"/>
+          <stop offset="52%" stop-color="#2f8ce0"/>
+          <stop offset="100%" stop-color="#1d4ed8"/>
+        </linearGradient>
+        <linearGradient id="tailGrad" x1="0" y1="0" x2="1" y2="1">
+          <stop offset="0%" stop-color="#2563eb"/>
+          <stop offset="100%" stop-color="#1e3a8a"/>
+        </linearGradient>
+        <radialGradient id="bellyGrad" cx="0.5" cy="0.45" r="0.6">
+          <stop offset="0%" stop-color="#cdeeff" stop-opacity=".85"/>
+          <stop offset="100%" stop-color="#bfe9ff" stop-opacity="0"/>
+        </radialGradient>
+      </defs>
+
+      <g class="bob">
+        <g class="spout" fill="none" stroke-linecap="round">
+          <path d="M188 94 q-18 -34 -44 -46" stroke="#a5f3fc" stroke-width="4.5" opacity="0"/>
+          <path d="M188 94 q18 -34 44 -46" stroke="#a5f3fc" stroke-width="4.5" opacity="0"/>
+        </g>
+
+        <path d="M294 150 C314 126 344 105 374 94 C366 121 356 138 345 150 C356 162 366 179 374 206 C344 195 314 174 294 150 Z" fill="url(#tailGrad)"/>
+        <ellipse cx="188" cy="150" rx="112" ry="56" fill="url(#bodyGrad)"/>
+        <path d="M228 99 q2 -22 24 -31 q-3 17 6 27 z" fill="#1d4ed8" opacity=".92"/>
+
+        <ellipse cx="196" cy="170" rx="84" ry="33" fill="url(#bellyGrad)"/>
+
+        <path d="M172 192 q16 32 46 29 q-21 -18 -23 -33 z" fill="#1e40af" opacity=".92"/>
+
+        <path d="M134 176 q22 13 44 3" stroke="#0a2a45" stroke-width="3.2" fill="none" stroke-linecap="round" opacity=".42"/>
+
+        <circle cx="140" cy="136" r="8.8" fill="#08192a"/>
+        <circle cx="143" cy="133" r="3" fill="#ffffff"/>
+        <ellipse cx="112" cy="170" rx="12" ry="6.5" fill="#fca5a5" opacity=".4"/>
+
+        <path d="M248 110 q15 -12 30 -3" stroke="rgba(255,255,255,.5)" stroke-width="3.4" fill="none" stroke-linecap="round"/>
+      </g>
+    </svg>
+    <div class="status" id="status">还没开工，先喘口气</div>
+  </section>
+
+  <section class="grid">
+    <div class="card">
+      <div class="card-title"><span>工时</span><span id="clock">--:--</span></div>
+      <div class="row"><span class="dot work"></span><span class="label">打工</span><b id="workTime">00:00:00</b></div>
+      <div class="row"><span class="dot fish"></span><span class="label">摸鱼</span><b id="fishTime">00:00:00</b></div>
+      <div class="btns">
+        <button class="btn primary" id="btnWork">上班</button>
+        <button class="btn" id="btnFish">摸鱼</button>
+        <button class="btn ghost" id="btnStop">下班</button>
+      </div>
+    </div>
+
+    <div class="card">
+      <div class="card-title"><span>鲸鱼语录</span></div>
+      <p class="q" id="quote">…</p>
+      <button class="btn ghost small" id="btnQuote">换一句</button>
+    </div>
+  </section>
+
+  <section class="card todo">
+    <div class="card-title"><span>今天的活</span><span id="progressText">0 / 0</span></div>
+    <div class="bar"><i id="bar"></i></div>
+    <form class="add" id="taskForm" autocomplete="off">
+      <input id="taskInput" maxlength="80" placeholder="比如：把那个没人看的周报写完…" />
+      <button class="btn primary" type="submit">加一条</button>
+    </form>
+    <ul class="list" id="taskList"></ul>
+  </section>
+
+  <footer class="foot">
+    <button class="btn ghost small" id="btnCopy">复制日报</button>
+    <span id="storage">存储：本地浏览器</span>
+  </footer>
+</main>
+
+<div class="toast" id="toast"></div>
+
+<script>
+(function(){
+  "use strict";
+
+  var LS_KEY = "whale-diary-v1";
+  var QUOTES = [
+    "打工是不会打工的…但工资是真的香。",
+    "今天也很努力地在努力摸鱼，辛苦了。",
+    "别慌，KPI 又不会自己长腿跑掉——它只会跑得更远。",
+    "海很大，我的工时也很大。",
+    "老板说要有光，于是我开了加班的灯。",
+    "活着就行，其他的慢慢来。",
+    "我不是懒，我只是在保存体力等下班。",
+    "把事做完的那一刻，鲸鱼会喷一次水。",
+    "有些周报写给人看，有些写给自己看，我这个写给回收站看。",
+    "情绪稳定，是因为已经麻了。",
+    "今天的目标：不被拉进新的群。",
+    "摸鱼五分钟，回血两小时。",
+    "会议的本质是把一个人的事变成十个人的事。",
+    "我这条鲸鱼，搁浅在了下午四点。",
+    "钱少事多离得远，但胜在选择困难。",
+    "再干一会儿就下班，再干一会儿就下班……",
+    "今天的我，是昨天的我对不起的我。",
+    "努力工作，是为了以后能体面地摆烂。",
+    "深海里没有信号，所以别 @ 我。",
+    "工资到账的那一刻，我又可以了。",
+    "世界很大，工位很小，但我在里面游得挺好。",
+    "摸鱼不是偷懒，是给灵魂换水。",
+    "如果有人问我在干什么，就说我在对齐目标。",
+    "打工人没有假期，只有不打卡的日子。",
+    "别急，慢一点也能游到。"
+  ];
+
+  var hasServer = location.protocol === "http:" || location.protocol === "https:";
+  var state = {
+    mode: "idle",
+    since: null,
+    acc: { work: 0, fish: 0 },
+    tasks: [],
+    quote: QUOTES[0],
+    day: todayKey()
+  };
+
+  var el = {
+    bubbles: document.getElementById("bubbles"),
+    today: document.getElementById("today"),
+    status: document.getElementById("status"),
+    workTime: document.getElementById("workTime"),
+    fishTime: document.getElementById("fishTime"),
+    clock: document.getElementById("clock"),
+    quote: document.getElementById("quote"),
+    btnWork: document.getElementById("btnWork"),
+    btnFish: document.getElementById("btnFish"),
+    btnStop: document.getElementById("btnStop"),
+    btnQuote: document.getElementById("btnQuote"),
+    btnCopy: document.getElementById("btnCopy"),
+    taskForm: document.getElementById("taskForm"),
+    taskInput: document.getElementById("taskInput"),
+    taskList: document.getElementById("taskList"),
+    progressText: document.getElementById("progressText"),
+    bar: document.getElementById("bar"),
+    storage: document.getElementById("storage"),
+    toast: document.getElementById("toast")
+  };
+
+  function todayKey(){
+    var d = new Date();
+    return d.getFullYear() + "-" + pad2(d.getMonth() + 1) + "-" + pad2(d.getDate());
+  }
+  function pad2(n){ return (n < 10 ? "0" : "") + n; }
+  function fmt(ms){
+    var s = Math.max(0, Math.floor(ms / 1000));
+    var h = Math.floor(s / 3600);
+    var m = Math.floor((s % 3600) / 60);
+    return pad2(h) + ":" + pad2(m) + ":" + pad2(s % 60);
+  }
+  function human(ms){
+    var s = Math.floor(ms / 1000);
+    var h = Math.floor(s / 3600), m = Math.floor((s % 3600) / 60);
+    if (h > 0) return h + " 小时 " + m + " 分";
+    if (m > 0) return m + " 分钟";
+    return s + " 秒";
+  }
+  var WEEK = ["周日","周一","周二","周三","周四","周五","周六"];
+  function renderDate(){
+    var d = new Date();
+    el.today.textContent = d.getFullYear() + " 年 " + (d.getMonth() + 1) + " 月 " + d.getDate() + " 日 · " + WEEK[d.getDay()];
+  }
+
+  function makeBubbles(){
+    for (var i = 0; i < 16; i++){
+      var b = document.createElement("i");
+      b.className = "bubble";
+      var size = 5 + Math.random() * 26;
+      b.style.left = (Math.random() * 100).toFixed(2) + "%";
+      b.style.width = size.toFixed(1) + "px";
+      b.style.height = size.toFixed(1) + "px";
+      b.style.animationDuration = (11 + Math.random() * 16).toFixed(1) + "s";
+      b.style.animationDelay = (-Math.random() * 22).toFixed(1) + "s";
+      el.bubbles.appendChild(b);
+    }
+  }
+
+  function load(){
+    var raw = null;
+    try { raw = localStorage.getItem(LS_KEY); } catch (e) { raw = null; }
+    if (raw){
+      try { state = Object.assign(state, JSON.parse(raw)); } catch (e) {}
+    }
+    if (!state.acc) state.acc = { work: 0, fish: 0 };
+    if (!state.tasks) state.tasks = [];
+    if (state.day !== todayKey()){
+      state.day = todayKey();
+      state.acc = { work: 0, fish: 0 };
+      state.since = state.mode === "idle" ? null : Date.now();
+    }
+  }
+
+  function save(quiet){
+    try { localStorage.setItem(LS_KEY, JSON.stringify(state)); } catch (e) {}
+    if (hasServer){
+      try {
+        fetch("api/state", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify(state)
+        }).catch(function(){});
+      } catch (e) {}
+    }
+    if (!quiet) flash("已保存");
+  }
+
+  function pull(){
+    if (!hasServer) { el.storage.textContent = "存储：本地浏览器（直接双击打开也能用）"; return; }
+    el.storage.textContent = "存储：本地浏览器 + D:\\HTML\\data.json";
+    fetch("api/state").then(function(r){ return r.json(); }).then(function(remote){
+      if (remote && remote.tasks && (!state.tasks.length && !state.acc.work)){
+        state = Object.assign(state, remote);
+        renderAll();
+      }
+    }).catch(function(){});
+  }
+
+  function settle(now){
+    if (state.mode !== "idle" && state.since){
+      var delta = now - state.since;
+      if (delta > 0) state.acc[state.mode] = (state.acc[state.mode] || 0) + delta;
+    }
+    state.since = now;
+  }
+
+  function setMode(mode){
+    var now = Date.now();
+    settle(now);
+    state.mode = mode;
+    state.since = mode === "idle" ? null : now;
+    document.body.classList.toggle("fast", mode === "work");
+    renderAll();
+    save(true);
+  }
+
+  function liveOf(mode){
+    var base = state.acc[mode] || 0;
+    if (state.mode === mode && state.since) base += Date.now() - state.since;
+    return base;
+  }
+
+  function tick(){
+    var w = liveOf("work"), f = liveOf("fish");
+    el.workTime.textContent = fmt(w);
+    el.fishTime.textContent = fmt(f);
+    el.btnWork.classList.toggle("on", state.mode === "work");
+    el.btnFish.classList.toggle("on", state.mode === "fish");
+    el.status.textContent =
+      state.mode === "work" ? "正在打工 · 别看我，我也很忙" :
+      state.mode === "fish" ? "摸鱼中 · 工资照算，良心略痛" :
+      "还没开工，先喘口气";
+    el.clock.textContent = state.mode === "idle" ? "已收工" : fmt(liveOf(state.mode));
+  }
+
+  function renderTasks(){
+    el.taskList.innerHTML = "";
+    var done = 0;
+    if (!state.tasks.length){
+      var p = document.createElement("li");
+      p.className = "empty";
+      p.textContent = "今天的活还没写，先加一条吧（写什么都可以，反正也做不完）";
+      el.taskList.appendChild(p);
+    }
+    state.tasks.forEach(function(t){
+      if (t.done) done++;
+      var li = document.createElement("li");
+      if (t.done) li.className = "done";
+
+      var cb = document.createElement("input");
+      cb.type = "checkbox";
+      cb.checked = !!t.done;
+      cb.addEventListener("change", function(){
+        t.done = cb.checked;
+        renderTasks();
+        save(true);
+        if (cb.checked) flash("完成一条，鲸鱼喷了一次水 💦");
+      });
+
+      var span = document.createElement("span");
+      span.className = "txt";
+      span.textContent = t.text;
+
+      var del = document.createElement("button");
+      del.type = "button";
+      del.className = "del";
+      del.textContent = "×";
+      del.title = "删掉";
+      del.addEventListener("click", function(){
+        state.tasks = state.tasks.filter(function(x){ return x.id !== t.id; });
+        renderTasks();
+        save(true);
+      });
+
+      li.appendChild(cb);
+      li.appendChild(span);
+      li.appendChild(del);
+      el.taskList.appendChild(li);
+    });
+    var total = state.tasks.length;
+    el.progressText.textContent = done + " / " + total;
+    el.bar.style.width = (total ? Math.round(done / total * 100) : 0) + "%";
+  }
+
+  function renderQuote(text, animate){
+    el.quote.textContent = text;
+    if (animate){
+      el.quote.classList.remove("fade");
+      void el.quote.offsetWidth;
+      el.quote.classList.add("fade");
+    }
+  }
+
+  function renderAll(){
+    tick();
+    renderTasks();
+    renderQuote(state.quote || QUOTES[0], false);
+  }
+
+  function flash(msg){
+    el.toast.textContent = msg;
+    el.toast.classList.add("show");
+    clearTimeout(flash._t);
+    flash._t = setTimeout(function(){ el.toast.classList.remove("show"); }, 1700);
+  }
+
+  function randQuote(){
+    var q = state.quote;
+    var guard = 0;
+    while (q === state.quote && guard++ < 30) q = QUOTES[Math.floor(Math.random() * QUOTES.length)];
+    return q;
+  }
+
+  function copyReport(){
+    var d = new Date();
+    var lines = [];
+    lines.push("🐋 小鲸鱼打工日记 · " + d.getFullYear() + "-" + pad2(d.getMonth() + 1) + "-" + pad2(d.getDate()));
+    lines.push("打工 " + human(liveOf("work")) + " ｜ 摸鱼 " + human(liveOf("fish")));
+    var done = state.tasks.filter(function(t){ return t.done; }).length;
+    lines.push("今天的活：" + done + " / " + state.tasks.length + " 完成");
+    state.tasks.forEach(function(t){ lines.push((t.done ? "  [x] " : "  [ ] ") + t.text); });
+    lines.push("—— " + (state.quote || ""));
+    var text = lines.join("\n");
+
+    function ok(){ flash("日报已复制，去粘贴吧"); }
+    if (navigator.clipboard && navigator.clipboard.writeText){
+      navigator.clipboard.writeText(text).then(ok).catch(fallback);
+    } else {
+      fallback();
+    }
+    function fallback(){
+      var ta = document.createElement("textarea");
+      ta.value = text;
+      ta.style.position = "fixed";
+      ta.style.opacity = "0";
+      document.body.appendChild(ta);
+      ta.select();
+      try { document.execCommand("copy"); ok(); } catch (e) { flash("复制失败，手动选一下文字吧"); }
+      document.body.removeChild(ta);
+    }
+  }
+
+  el.btnWork.addEventListener("click", function(){ setMode(state.mode === "work" ? "idle" : "work"); });
+  el.btnFish.addEventListener("click", function(){ setMode(state.mode === "fish" ? "idle" : "fish"); });
+  el.btnStop.addEventListener("click", function(){ setMode("idle"); flash("下班，明天再战"); });
+  el.btnQuote.addEventListener("click", function(){
+    state.quote = randQuote();
+    renderQuote(state.quote, true);
+    save(true);
+  });
+  el.btnCopy.addEventListener("click", copyReport);
+
+  el.taskForm.addEventListener("submit", function(e){
+    e.preventDefault();
+    var v = el.taskInput.value.trim();
+    if (!v) return;
+    state.tasks.push({ id: Date.now() + "-" + Math.random().toString(36).slice(2, 7), text: v, done: false });
+    el.taskInput.value = "";
+    renderTasks();
+    save(true);
+  });
+
+  makeBubbles();
+  renderDate();
+  load();
+  renderAll();
+  pull();
+  setInterval(tick, 500);
+  setInterval(renderDate, 60000);
+})();
+</script>
+</body>
+</html>
